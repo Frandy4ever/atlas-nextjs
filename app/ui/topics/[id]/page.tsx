@@ -5,10 +5,12 @@ interface TopicPageProps {
 }
 
 export async function generateStaticParams() {
-  return []; // For fetch topic IDs dynamically later
+  return []; // For fetching topic IDs dynamically later
 }
 
-export async function generateMetadata({ params }: TopicPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: TopicPageProps): Promise<Metadata> {
   return {
     title: `Topic ${params.id}`,
   };
