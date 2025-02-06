@@ -1,3 +1,8 @@
 export default function Page() {
-  return <h1>Hello Atlas</h1>;
+  return (
+    <main>
+      <h1>Welcome to the Q&A App</h1>
+      <p>A platform where users can create topics and ask questions.</p>
+    </main>
+  );
 }
