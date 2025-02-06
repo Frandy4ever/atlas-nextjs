@@ -1,27 +1,28 @@
 import { Metadata } from "next";
 
 interface TopicPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function generateStaticParams() {
-  return []; // For fetching topic IDs dynamically later
+  return [{ id: "1" }, { id: "2" }, { id: "3" }]; // Example IDs
 }
 
-export async function generateMetadata({
-  params,
-}: TopicPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const resolvedParams = await params;
   return {
-    title: `Topic ${params.id}`,
+    title: `Topic ${resolvedParams.id}`,
   };
 }
 
-export default async function TopicPage({ params }: TopicPageProps) {
-  if (!params || !params.id) return <p>Loading...</p>;
+export default async function TopicPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+
+  if (!resolvedParams?.id) return <p>Loading...</p>;
 
   return (
     <main>
-      <h1>Topic: {params.id}</h1>
+      <h1>Topic: {resolvedParams.id}</h1>
       <p>List of questions related to this topic will be displayed here.</p>
     </main>
   );
