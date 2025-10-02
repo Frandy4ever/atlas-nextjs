@@ -2,17 +2,29 @@
 const users = [
   {
     id: "410544b2-4001-4271-9855-fec4b6a6442b",
-    name: "User",
+    name: "Atlas School",
     email: "user@atlasmail.com",
     password: "123456",
   },
-];
+  {
+    id: "510544b2-4001-4271-9855-fec4b6a6442c",
+    name: "Code Breeder",
+    email: "cbreeder@coder.dev",
+    password: "246810",
+  },
+  {
+    id: "610544b2-4001-4271-9855-fec4b6a6442d",
+    name: "Atlas Student",
+    email: "student@atlas.com",
+    password: "13579",
+  },
+]
 
 const topics = [
   { id: "1a8de96c-3688-4c65-8771-c0136dbd97f5", title: "React" },
   { id: "7bb14f87-be4e-4662-a0e0-97dce25d432f", title: "Tailwind" },
   { id: "f9641d15-0185-4b4c-a747-403f80b0becb", title: "Typescript" },
-];
+]
 
 const questions = [
   {
@@ -77,6 +89,6 @@ const questions = [
     topic: "f9641d15-0185-4b4c-a747-403f80b0becb",
     votes: 2,
   },
-];
+]
 
-export { users, topics, questions };
+export { users, topics, questions }
