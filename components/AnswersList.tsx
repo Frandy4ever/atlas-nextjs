@@ -1,6 +1,6 @@
 "use client";
 
-import AnswerItem from "./AnswerItem";
+import AnswerItem from './AnswerItem';
 
 type Answer = {
   id: string;
