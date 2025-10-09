@@ -1,5 +1,6 @@
 import { sql } from "@vercel/postgres";
-import { Question, Topic, User, Answer } from "./definitions";
+import type { Question, Topic, User, Answer } from "./definitions";
+
 
 export async function fetchUser(email: string): Promise<User | undefined> {
   try {
@@ -115,5 +116,96 @@ export async function fetchAnswersForQuestion(questionId: string) {
   } catch (error) {
     console.error("Database Error (fetchAnswersForQuestion):", error);
     throw new Error("Failed to fetch answers for question.");
+  }
+}
+
+export async function insertAnswer(payload: Answer) {
+  try {
+    console.log("insertAnswer payload:", payload);
+
+    const attempts: Array<{ sqlQuery: any }> = [];
+
+    // Try the likely column names in order.
+    attempts.push({
+      sqlQuery: sql`
+        INSERT INTO answers (question_id, answer, author)
+        VALUES (${payload.question_id}, ${payload.content}, ${payload.author ?? null})
+        RETURNING *
+      `,
+    });
+
+    attempts.push({
+      sqlQuery: sql`
+        INSERT INTO answers (question_id, answer)
+        VALUES (${payload.question_id}, ${payload.content})
+        RETURNING *
+      `,
+    });
+
+    // fallback options
+    attempts.push({
+      sqlQuery: sql`
+        INSERT INTO answers (question_id, content, author)
+        VALUES (${payload.question_id}, ${payload.content}, ${payload.author ?? null})
+        RETURNING *
+      `,
+    });
+
+    attempts.push({
+      sqlQuery: sql`
+        INSERT INTO answers (question_id, content)
+        VALUES (${payload.question_id}, ${payload.content})
+        RETURNING *
+      `,
+    });
+
+    attempts.push({
+      sqlQuery: sql`
+        INSERT INTO answers (question_id, body)
+        VALUES (${payload.question_id}, ${payload.content})
+        RETURNING *
+      `,
+    });
+
+    attempts.push({
+      sqlQuery: sql`
+        INSERT INTO answers (question_id, text)
+        VALUES (${payload.question_id}, ${payload.content})
+        RETURNING *
+      `,
+    });
+
+    let lastError: any = null;
+    for (const attempt of attempts) {
+      try {
+        const res = await attempt.sqlQuery;
+        const row = (res.rows as unknown[])[0] as Record<string, any>;
+
+        // Map row to canonical Answer shape (defensive)
+        const answer: Answer = {
+          id: row.id ?? row.answer_id ?? String(Date.now()),
+          question_id: row.question_id ?? row.question ?? payload.question_id,
+          content: row.answer ?? row.content ?? row.body ?? row.text ?? payload.content ?? "",
+          author: row.author ?? row.user_name ?? undefined,
+          created_at: row.created_at
+            ? new Date(row.created_at).toISOString()
+            : row.inserted_at
+            ? new Date(row.inserted_at).toISOString()
+            : null,
+        };
+
+        console.log("insertAnswer mapped:", answer);
+        return answer;
+      } catch (err) {
+        console.warn("insertAnswer attempt failed:", (err as any).message ?? err);
+        lastError = err;
+      }
+    }
+
+    console.error("All insert attempts failed for insertAnswer. Last error:", lastError);
+    throw lastError ?? new Error("All insert attempts failed.");
+  } catch (err) {
+    console.error("Database Error (insertAnswer):", err);
+    throw new Error("Failed to insert answer.");
   }
 }

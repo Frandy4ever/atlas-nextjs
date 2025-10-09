@@ -1,6 +1,4 @@
-// This file contains type definitions for your data.
-// It describes the shape of the data, and what data type each property should accept.
-
+// lib/definitions.ts
 export type User = {
   id: string;
   name: string;
@@ -18,12 +16,14 @@ export type Question = {
   title: string;
   topic_id: string;
   votes: number;
+  accepted_answer_id?: string | null;
 };
 
 export type Answer = {
   id: string;
-  answer: string;
   question_id: string;
-  accepted: boolean;
+  content: string;
+  author?: string | undefined;
+  created_at?: string | null;
+  accepted?: boolean;
 };
-
