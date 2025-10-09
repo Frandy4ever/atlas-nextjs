@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import AnswersList from "./AnswersList";
 import AnswerForm from "./AnswerForm";
+import { markAnswerAsAccepted } from "@/lib/actions";
 import type { Question as QType } from "@/lib/definitions";
 
 type Answer = {
@@ -13,18 +14,12 @@ type Answer = {
   author?: string;
 };
 
-export default function QuestionPageClient({
-  question,
-  answers: initialAnswers,
-}: {
-  question: QType;
-  answers: Answer[];
-}) {
-  const [answers, setAnswers] = useState<Answer[]>(initialAnswers);
+export default function QuestionPageClient({ question, initialAnswers }: { question: QType; initialAnswers: Answer[] }) {
+  const [answers, setAnswers] = useState(initialAnswers);
+  const [isPending, startTransition] = useTransition();
 
-  // Handle submitting a new answer (UI-only for now).
+  // Handle submitting a new answer
   function handleSubmit(text: string) {
-    // Create a temporary local answer object
     const newAnswer: Answer = {
       id: `temp-${Date.now()}`,
       question_id: question.id,
@@ -36,18 +31,22 @@ export default function QuestionPageClient({
     console.log("submit answer (client):", text);
   }
 
-  // Handle marking an answer as accepted (client-side update)
+  // Handle marking an answer as accepted (persists to server)
   function handleMarkAccepted(id: string) {
+    // For responsiveness
     setAnswers((prev) =>
-      prev.map((a) => ({ ...a, accepted: a.id === id ? true : false }))
+      prev.map((a) => ({ ...a, accepted: a.id === id }))
     );
-    // Move the accepted answer to top by re-sorting
-    setAnswers((prev) => {
-      const copy = [...prev];
-      copy.sort((a, b) => (b.accepted ? 1 : 0) - (a.accepted ? 1 : 0));
-      return copy;
+
+    // Persist change on the server
+    startTransition(async () => {
+      try {
+        await markAnswerAsAccepted(question.id, id);
+        console.log("✅ Accepted answer saved:", id);
+      } catch (err) {
+        console.error("❌ Failed to save accepted answer:", err);
+      }
     });
-    console.log("mark accepted (client):", id);
   }
 
   return (
@@ -57,6 +56,10 @@ export default function QuestionPageClient({
       </div>
 
       <AnswersList answers={answers} onMarkAccepted={handleMarkAccepted} />
+
+      {isPending && (
+        <p className="mt-2 text-sm text-gray-500">Saving accepted answer...</p>
+      )}
     </div>
   );
 }

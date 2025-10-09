@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { db } from "@vercel/postgres";
-import { users, topics, questions } from "../../lib/placeholder-data";
+import { users, topics, questions } from "../../../lib/placeholder-data";
 import { revalidatePath } from "next/cache";
 
 const client = await db.connect();
@@ -89,30 +89,45 @@ async function seedQuestions() {
 async function seedAnswers() {
   await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
 
+  // 🟩 UPDATED: Added "accepted BOOLEAN DEFAULT false"
   await client.sql`
     CREATE TABLE IF NOT EXISTS answers (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
       answer VARCHAR(255) NOT NULL,
-      question_id UUID NOT NULL
+      question_id UUID NOT NULL,
+      accepted BOOLEAN DEFAULT false
     );
   `;
 
   await client.sql`DELETE FROM answers`;
 
   const answers = [
-    {
-      id: "0b93d8dc-6e43-49e3-b59f-b67531247612",
-      answer:
-        "It's a new feature in TypeScript that makes it easier to write type-safe code.",
-      question_id: "0b93d8dc-6e43-49e3-b59f-b67531247612",
-    },
-  ];
+  {
+    id: "0b93d8dc-6e43-49e3-b59f-b67531247612",
+    answer: "It's a new feature in TypeScript that makes it easier to write type-safe code.",
+    question_id: "0b93d8dc-6e43-49e3-b59f-b67531247612",
+    accepted: true,
+  },
+  {
+    id: "0b93d8dc-6e43-49e3-b59f-b67531247613",
+    answer: "Null safety prevents runtime errors due to null or undefined values.",
+    question_id: "0b93d8dc-6e43-49e3-b59f-b67531247612",
+    accepted: false,
+  },
+  {
+    id: "0b93d8dc-6e43-49e3-b59f-b67531247614",
+    answer: "It forces you to handle optional values explicitly.",
+    question_id: "0b93d8dc-6e43-49e3-b59f-b67531247612",
+    accepted: false,
+  },
+];
+
 
   const insertedAnswers = await Promise.all(
     answers.map(
       (answer) => client.sql`
-        INSERT INTO answers (id, answer, question_id)
-        VALUES (${answer.id}, ${answer.answer}, ${answer.question_id})
+        INSERT INTO answers (id, answer, question_id, accepted)
+        VALUES (${answer.id}, ${answer.answer}, ${answer.question_id}, ${answer.accepted})
         ON CONFLICT (id) DO NOTHING;
       `
     )
@@ -122,6 +137,8 @@ async function seedAnswers() {
 }
 
 async function clearData() {
+  // Drop all tables in dependency-safe order
+  await client.sql`DROP TABLE IF EXISTS answers`;
   await client.sql`DROP TABLE IF EXISTS questions`;
   await client.sql`DROP TABLE IF EXISTS topics`;
   await client.sql`DROP TABLE IF EXISTS users`;
@@ -142,7 +159,7 @@ export async function GET() {
     return Response.json({ message: "Database seeded successfully" });
   } catch (error) {
     await client.sql`ROLLBACK`;
-    console.log(error);
+    console.error(error);
     return Response.json({ error }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
 import { sql } from "@vercel/postgres";
-import { Question, Topic, User } from "./definitions";
+import { Question, Topic, User, Answer } from "./definitions";
 
 export async function fetchUser(email: string): Promise<User | undefined> {
   try {
@@ -75,5 +75,45 @@ export async function incrementVotes(id: string) {
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to increment votes.");
+  }
+}
+
+export async function updateAcceptedAnswer(questionId: string, answerId: string) {
+  try {
+    await sql`
+      UPDATE questions
+      SET answer_id = ${answerId}
+      WHERE id = ${questionId};
+    `;
+  } catch (error) {
+    console.error("Database Error (updateAcceptedAnswer):", error);
+    throw new Error("Failed to update accepted answer.");
+  }
+}
+
+export async function fetchQuestionById(id: string) {
+  try {
+    const result = await sql<Question>`
+      SELECT * FROM questions WHERE id = ${id};
+    `;
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Database Error (fetchQuestionById):", error);
+    throw new Error("Failed to fetch question.");
+  }
+}
+
+export async function fetchAnswersForQuestion(questionId: string) {
+  try {
+    const result = await sql<Answer>`
+      SELECT *
+      FROM answers
+      WHERE question_id = ${questionId}
+      ORDER BY accepted DESC;
+    `;
+    return result.rows;
+  } catch (error) {
+    console.error("Database Error (fetchAnswersForQuestion):", error);
+    throw new Error("Failed to fetch answers for question.");
   }
 }

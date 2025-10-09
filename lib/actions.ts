@@ -2,7 +2,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { incrementVotes, insertQuestion, insertTopic } from "./data";
+import { incrementVotes, insertQuestion, insertTopic, updateAcceptedAnswer } from "./data";
 import { redirect } from "next/navigation";
 
 export async function addTopic(data: FormData) {
@@ -44,3 +44,12 @@ export async function addVote(data: FormData) {
   }
 }
 
+export async function markAnswerAsAccepted(questionId: string, answerId: string) {
+  try {
+    await updateAcceptedAnswer(questionId, answerId);
+    revalidatePath(`/ui/questions/${questionId}`);
+  } catch (error) {
+    console.error("Error updating accepted answer:", error);
+    throw new Error("Could not mark answer as accepted.");
+  }
+}

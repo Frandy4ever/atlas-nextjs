@@ -1,54 +1,24 @@
+import { fetchQuestionById, fetchAnswersForQuestion } from "@/lib/data";
 import QuestionPageClient from "@/components/QuestionPageClient";
-import { questions } from "@/lib/placeholder-data";
 
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-
-  const question = questions.find((q) => q.id === id);
-
+export default async function QuestionPage({ params }: { params: { id: string } }) {
+  const question = await fetchQuestionById(params.id);
   if (!question) {
-    return <div>Question not found</div>;
+    return <div className="p-4 text-red-500">Question not found.</div>;
   }
 
-  const questionForClient = {
-    id: question.id,
-    title: question.title,
-    topic_id: (question as any).topic ?? "",
-    votes: question.votes,
-  };
-
-  const sampleAnswers = [
-    {
-      id: "a-1",
-      question_id: id,
-      content: "This is an accepted sample answer (UI example).",
-      accepted: true,
-      author: "Atlas Student",
-    },
-    {
-      id: "a-2",
-      question_id: id,
-      content: "This is another answer posted by a user.",
-      accepted: false,
-      author: "Code Breeder",
-    },
-    {
-      id: "a-3",
-      question_id: id,
-      content: "A third example answer to show ordering.",
-      accepted: false,
-      author: "Atlas School",
-    },
-  ];
+  const answers = (await fetchAnswersForQuestion(params.id)).map((a) => ({
+  id: a.id,
+  content: a.answer,     // map `answer` -> `content`
+  question_id: a.question_id,
+  accepted: a.accepted,
+  author: "Anonymous",   // optional
+}));
 
   return (
-    <div>
-      <h1 className="mb-6 text-3xl font-black">{question.title}</h1>
-      <QuestionPageClient question={questionForClient} answers={sampleAnswers} />
+    <div className="p-4 space-y-6">
+      <h1 className="text-2xl font-semibold">{question.title}</h1>
+      <QuestionPageClient question={question} initialAnswers={answers} />
     </div>
   );
 }
